@@ -2,12 +2,12 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: mysite-nginx-ingress
-  # namespace: mysite
+  namespace: mysite
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/redirect-entry-point: https
 spec:
+  ingressClassName: traefik
   rules:
   - host: YOUR_DOMAIN_HERE
     http:
