@@ -148,12 +148,12 @@ kubectl get nodes
 ## Longhorn Installation
 Finally, you have to deploy [Longhorn](https://longhorn.io) the distributed block storage by the following commands of the `kubectl` or `helm` method:
 
-Method 1 by `kubectl`:
+### Method 1 Using Kubectl
 ```sh
-kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.2.3/deploy/longhorn.yaml
+kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.5.1/deploy/longhorn.yaml
 ```
 
-Method 2 by `helm`:
+### Method 2 Using Helm
 You can find a shell script with all commands in the `services` folder which run all the following commands at once.
 ```sh
 helm repo add longhorn https://charts.longhorn.io
@@ -178,9 +178,9 @@ After a some minutes all pods are in the running state and you can connect to th
 kubectl port-forward deployment/longhorn-ui 8000:8000 -n longhorn-system
 ```
 
-Use this URL to access the interface: `http://127.0.0.1:8000` .
+Use this URL to access the interface: [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
-## Automatically certificate creation via Let's Encrypt
+## Automatic Certificate Creation via Let's Encrypt
 For propagating your services, it is strongly recommended to use TLS encryption. In this case you have to deploy certificates for all of your services which should be reachable via the internet. To fulfill this requirement you can use the [`cert-manager`](https://cert-manager.io/) deployment in the `services/cert-manager/` directory. A more detailed explanation of how to set this up can be found on [sysadmins.co.za](https://sysadmins.co.za/https-using-letsencrypt-and-traefik-with-k3s/).
 
 These instructions assume that you already have some service running in your cluster tyhat you wish to expose.
