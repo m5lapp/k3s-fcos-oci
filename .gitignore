@@ -6,4 +6,5 @@
 *.terraform
 *.tfstate
 *.tfstate.backup
+certs/
 fedora_coreos_mine/

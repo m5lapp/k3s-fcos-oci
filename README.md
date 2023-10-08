@@ -220,6 +220,44 @@ All you need to do is create a DNS A record that points to one or more of your n
 
 Once you have the DNS entries set up, you can then just create an ingress for each sub-domain that you want to use. You should use the same .spec.tls.secretName for each one. Each Ingress resource needs to be in the same namespace as the Service is is routing to.
 
+## Service Mesh (Linkerd) Installation
+The free-tier, four-node cluster does not really have sufficient resources available to run a service mesh like Istio. Particularly it seems to struggle with a lack of CPU resources. [Linkerd](https://linkerd.io/2.14/features/automatic-mtls/#operational-concerns) however is much more lightweight and works really well.
+
+As per the [Linkerd documentation](https://linkerd.io/2.14/features/automatic-mtls/#operational-concerns), the default installation requires the trust anchor and cluster issuer certificate and key to be [manually rotated](https://linkerd.io/2.14/tasks/manually-rotating-control-plane-tls-credentials/) every year. It therefore might be preferable to install Linkerd with a longer-lasting, manually-created trust anchor certificate and [use Cert Manager](https://linkerd.io/2.14/tasks/automatically-rotating-control-plane-tls-credentials/) to rotate the cluster issuer certificate and key. The installation process therefore is as follows:
+
+1. Install Cert Manager as described in the section above
+1. Install the [step-cli](https://smallstep.com/docs/step-cli/installation/) tool for generating the required certificates
+1. Create the linkerd namespace: `kubectl create namespace linkerd`
+1. Generate the trust anchor key pair (valid here for ten years) and save them into a Kubernetes Secret:
+   ```sh
+   mkdir certs/
+
+   step certificate create root.linkerd.cluster.local certs/ca.crt certs/ca.key \
+       --profile root-ca --no-password --insecure --not-after 87600h
+
+   kubectl create secret tls linkerd-trust-anchor \
+       --cert certs/ca.crt --key certs/ca.key --namespace linkerd
+   ```
+1. Create a Cert Manager Issuer that references the new Secret:
+   ```sh
+   kubectl apply -f services/linkerd/trust_anchor_issuer.yaml
+   ```
+1. Create a Cert Manager Certificate that references the new Issuer and check that the identity issuer certificate then gets created successfully
+   ```sh
+   kubectl apply -f services/linkerd/identity_issuer_certificate.yaml
+
+   kubectl get secret -n linkerd linkerd-identity-issuer -o yaml
+   ```
+1. [Install](https://linkerd.io/2.14/getting-started/#step-1-install-the-cli) the Linkerd CLI
+1. Check everything is configured correctly with `linkerd check --pre`. This will likely fail in two places due to the linkerd namespace already existing; these failures can be ignored
+1. Install the Linkerd CRDs and then the control plane. Again, a warning will be printed out due to the linkerd namespace already existing, but everything should work OK
+   ```sh
+   linkerd install --crds | kubectl apply -f -
+   linkerd install | kubectl apply -f -
+   ```
+1. Check the installation with `linkerd check`, everything should report as being OK with no errors or warnings
+1. Finally [add your services](https://linkerd.io/2.14/tasks/adding-your-service/) to the Linkerd mesh
+
 ## Upgrading K3s
 As per the [K3s documentation](https://docs.k3s.io/upgrades/automated), [Rancher's system-upgrade-controller](https://github.com/rancher/system-upgrade-controller) can be used to automate the process of upgrading the K3s components.
 
