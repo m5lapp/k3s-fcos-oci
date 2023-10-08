@@ -250,13 +250,19 @@ As per the [Linkerd documentation](https://linkerd.io/2.14/features/automatic-mt
    ```
 1. [Install](https://linkerd.io/2.14/getting-started/#step-1-install-the-cli) the Linkerd CLI
 1. Check everything is configured correctly with `linkerd check --pre`. This will likely fail in two places due to the linkerd namespace already existing; these failures can be ignored
-1. Install the Linkerd CRDs and then the control plane. Again, a warning will be printed out due to the linkerd namespace already existing, but everything should work OK
+1. Install the Linkerd CRDs and then the control plane making sure to pass the --identity-external-issuer flag so that it uses the Cert Manager-managed Secrets. Again, a warning will be printed out due to the linkerd namespace already existing, but everything should work OK
    ```sh
    linkerd install --crds | kubectl apply -f -
-   linkerd install | kubectl apply -f -
+   linkerd install --identity-external-issuer | kubectl apply -f -
    ```
-1. Check the installation with `linkerd check`, everything should report as being OK with no errors or warnings
+1. Check the installation with `linkerd check`. As the issuer certificate is configured to expire after 48 hours and be rotated 25 hours before then, this will warn that the issuer certificate is not valid for at least 60 days. Again, this warning [can be safely ignored](https://github.com/linkerd/website/issues/1342)
 1. Finally [add your services](https://linkerd.io/2.14/tasks/adding-your-service/) to the Linkerd mesh
+1. Optionally, you may wish to install the viz extension for observability and visualisation of the Linkerd service mesh:
+   ```sh
+   linkerd viz install | kubectl apply -f -
+   linkerd check
+   linkerd viz dashboard &
+   ```
 
 ## Upgrading K3s
 As per the [K3s documentation](https://docs.k3s.io/upgrades/automated), [Rancher's system-upgrade-controller](https://github.com/rancher/system-upgrade-controller) can be used to automate the process of upgrading the K3s components.
