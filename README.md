@@ -264,6 +264,58 @@ As per the [Linkerd documentation](https://linkerd.io/2.14/features/automatic-mt
    linkerd viz dashboard &
    ```
 
+### Terminating Meshed Jobs
+One [side-effect](https://github.com/kubernetes/kubernetes/issues/25908) of running a sidecar like Linkerd's proxy with a Job in Kubernetes is that the Job will continue to run even after the main container has finished due to the Linkerd proxy container never terminating. For a CronJob, this also means that as the first instance of the Job never finishes, all subsequent instances will get stuck in the PodInitializing state. There are [a number of workarounds](https://itnext.io/three-ways-to-use-linkerd-with-kubernetes-jobs-c12ccc6d4c7c) for this all with their own pros and cons as described below.
+
+#### Option 1
+The simplest workaround for this issue is to simply remove any CronJob or Job Pods from the mesh by adding the `linkerd.io/inject: disabled` annotation to the `.spec.template.metadata.annotations` field of a Job or a CronJob's `jobTemplate`. The main downside of this approach is that if the Pod needs to communicate with another Pod on the mesh using mTLS, then this will obviously not work.
+
+#### Option 2
+Another option is to call the Linkerd admin `shutdown` hook from the main container in the Pod once the main command has completed [via the loopback interface](https://github.com/linkerd/linkerd2-proxy/pull/811#issue-775118324) using either cURL or wget.
+
+```bash
+# cURL
+/app/script.sh && \
+CODE = $?; curl -X POST 127.0.0.1:4191/shutdown; exit $CODE
+
+# wget
+/app/script.sh && \
+CODE=$?; wget --post-data '' 127.0.0.1:4191/shutdown; exit $CODE
+```
+
+This works reasonably well, but requires curl or wget to be available in the container. It also creates a coupling between the CronJob or Job manifest and the Linkerd service mesh.
+
+#### Option 3
+An alternative is to run an instance of the [lemonadehq/controller-sidecars](https://github.com/lemonade-hq/k8s-controller-sidecars) container in the cluster and add a specific annotation to the jobTemplate of any meshed Jobs or CronJobs. To get started, first, install the controller-sidecars Pod into the `kube-system` namespace:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/lemonade-hq/k8s-controller-sidecars/master/manifest.yml
+```
+
+Next, add the `lemonade.com/sidecars: linkerd-proxy` annotation to any CronJobs or Jobs that require it. Note that the value of the annotation is a comma-seperated list of sidecar container names, in this case, just linkerd-proxy. Once the main container in the Pod has completed, the sidecar-controller should then detect this and send a SIGTERM signal to the specified sidecard.
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: database-backup-data
+  namespace: workloads
+spec:
+  schedule: "0 3 * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          annotations:
+            lemonade.com/sidecars: linkerd-proxy 
+          labels:
+            job: database-backup-data
+        spec:
+          ...
+```
+
+This should have the advantage of having no coupling between the Jobs and the service mesh other than the addition of the annotation. Unfortunately, I have not been able to get this working in this K3s cluster, the main container runs to completion, but the sidecar-controller Pod does not seem to even send the SIGTERM that it's supposed to and the Pod gets stuck in a NotReady status.
+
 ## Upgrading K3s
 As per the [K3s documentation](https://docs.k3s.io/upgrades/automated), [Rancher's system-upgrade-controller](https://github.com/rancher/system-upgrade-controller) can be used to automate the process of upgrading the K3s components.
 
