@@ -316,6 +316,52 @@ spec:
 
 This should have the advantage of having no coupling between the Jobs and the service mesh other than the addition of the annotation. Unfortunately, I have not been able to get this working in this K3s cluster, the main container runs to completion, but the sidecar-controller Pod does not seem to even send the SIGTERM that it's supposed to and the Pod gets stuck in a NotReady status.
 
+### Using mTLS (Client Certificates) with Traefik Ingress
+If one of your services exposed via Ingress is only to be accessed by a small number of known users, then you can configure the route to use mutual TLS (client certificates) so that only clients that present a certificate signed by a particular authority can access the Ingress. This is a huge boon for security and is very simple to set up. The following instructions were adapted from [blog.rymcg.tech](https://blog.rymcg.tech/blog/k3s/k3s-07-mutual-tls/).
+
+First, create the required certificates using the `step` CLI.
+
+```bash
+# Create the root CA certificates.
+step certificate create "Root CA for example.com" \
+    --profile root-ca ca-root.crt ca-root.key
+
+# Create the intermediate CA certificates.
+step certificate create "Intermediate CA for mysite.example.com" \
+    ca-intermediate.crt ca-intermediate.key \
+    --profile intermediate-ca --ca ca-root.crt --ca-key ca-root.key
+
+# Combine both of the CA certificates in a single file.
+cat ca-intermediate.crt ca-root.crt > ca-certs.crt
+
+# Create the CA certificate Secret.
+kubectl create secret generic certificate-authority \
+   --namespace mysite --from-file=tls.ca=ca-certs.crt
+
+# Generate client certificates.
+step certificate create client-divesite \
+    client-mysite.crt client-mysite.key \
+    --profile leaf --not-after=8760h \
+    --ca ca-intermediate.crt \
+    --ca-key ca-intermediate.key \
+    --insecure --no-password --bundle
+
+# Convert the client certificate and ket to PKCS12 format for use in browsers.
+openssl pkcs12 -export -clcerts \
+    -inkey client-mysite.key -in client-mysite.crt \
+    -out client-mysite.p12 -name "mysite.example.com"
+```
+
+Next, as per the `services/ingress_mtls_example.yaml` file, create a Traefik TLSOption resource with the secretNames field set to the name of the Secret created previously and add the required two router annotations to the Ingress resource. The format of the second annotation's value is `${NAMESPACE}-${TLSOption_RESOURCE_NAME}-kubernetescrd`.
+
+```bash
+kubectl apply -f services/ingress_mtls_example.yaml
+```
+
+The endpoint can then be accessed using the client certificate and key previously created: `curl --cert client-mysite.crt --key client-mysite.key https://mysite.example.com/`.
+
+The PKCS12 client certificate can be imported into a browser and then selected when prompted by the browser upon visiting the website. Unfortunately, Firefox appears to require the client certificate to be issued by the same authority as the server certificate, which, if using Let's Encrypt, will not be the case. Therefore, Firefox will not even prompt for a certificate when the address is vistited.
+
 ## Upgrading K3s
 As per the [K3s documentation](https://docs.k3s.io/upgrades/automated), [Rancher's system-upgrade-controller](https://github.com/rancher/system-upgrade-controller) can be used to automate the process of upgrading the K3s components.
 

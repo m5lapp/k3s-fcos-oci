@@ -1,0 +1,42 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: mtls
+  namespace: mysite
+spec:
+  minVersion: VersionTLS12
+  maxVersion: VersionTLS13
+  clientAuth:
+    secretNames:
+    - certificate-authority
+    clientAuthType: RequireAndVerifyClientCert
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mysite-nginx-ingress
+  namespace: mysite
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/redirect-entry-point: https
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls.options: mysite-mtls@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: YOUR_DOMAIN_HERE
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: YOUR_SERVICE_HERE
+            port:
+                number: 8080
+  tls:
+  - hosts:
+    - YOUR_DOMAIN_HERE
+    secretName: mysite-tls-prod
