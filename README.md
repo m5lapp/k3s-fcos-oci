@@ -360,7 +360,9 @@ kubectl apply -f services/ingress_mtls_example.yaml
 
 The endpoint can then be accessed using the client certificate and key previously created: `curl --cert client-mysite.crt --key client-mysite.key https://mysite.example.com/`.
 
-The PKCS12 client certificate can be imported into a browser and then selected when prompted by the browser upon visiting the website. Unfortunately, Firefox appears to require the client certificate to be issued by the same authority as the server certificate, which, if using Let's Encrypt, will not be the case. Therefore, Firefox will not even prompt for a certificate when the address is vistited.
+The PKCS12 client certificate can be imported into a browser and then selected when prompted by the browser upon visiting the website. To install on Chrome, open **Settings**, then navigate to **Privacy and Security** > **Security** > **Manage device certificates** and then import the PKCS12 version of the client certificate.
+
+Unfortunately, Firefox appears to require the client certificate to be issued by the same authority as the server certificate, which, if using Let's Encrypt, will not be the case. Therefore, Firefox will not even prompt for a certificate when the address is vistited.
 
 ## Upgrading K3s
 As per the [K3s documentation](https://docs.k3s.io/upgrades/automated), [Rancher's system-upgrade-controller](https://github.com/rancher/system-upgrade-controller) can be used to automate the process of upgrading the K3s components.
