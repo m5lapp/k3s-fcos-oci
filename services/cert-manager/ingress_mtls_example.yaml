@@ -1,3 +1,126 @@
+# Create a self-signed Issuer to bootstrap the root CA with.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: example-com-bootstrap-issuer
+  namespace: cert-manager
+spec:
+  selfSigned: {}
+
+---
+# Create the root CA certificate using the bootstrap-issuer.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: example-com-root-ca-cert
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: example.com
+  secretName: example-com-root-ca-cert
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: example-com-bootstrap-issuer
+    kind: Issuer
+    group: cert-manager.io
+
+---
+
+# Create the root CA issuer using the root CA certificate.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: example-com-root-ca-issuer
+  namespace: cert-manager
+spec:
+  ca:
+    secretName: example-com-root-ca-cert
+
+---
+
+# Create a certificate for the intermediate mysite CA.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mysite-example-com-ca-cert
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: mysite.example.com
+  secretName: mysite-example-com-ca-cert
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: example-com-root-ca-issuer
+    kind: Issuer
+    group: cert-manager.io
+
+---
+
+# Create an intermediate CA issuer using the intermediate mysite CA certificate.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: mysite-example-com-ca-issuer
+  namespace: cert-manager
+spec:
+  ca:
+    secretName: mysite-example-com-ca-cert
+
+---
+
+# Create a CA certificate bundle and deploy it to the mysite namespace.
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: example-com-ca-certs-bundle
+spec:
+  sources:
+  - useDefaultCAs: false
+  - secret:
+      name: mysite-example-com-ca-cert
+      key: tls.crt
+  - secret:
+      name: example-com-root-ca-cert
+      key: tls.crt
+  target:
+    secret:
+      key: ca.crt
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: mysite
+
+---
+
+# Create a certificate for the client using the intermediate mysite CA.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mysite-example-com-userx-client-cert
+  namespace: cert-manager
+spec:
+  isCA: false
+  commonName: mysite.example.com
+  dnsNames:
+  - mysite.example.com
+  emailAddresses:
+  - userx@mysite.example.com
+  duration: 8760h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  secretName: mysite-example-com-userx-client-cert
+  issuerRef:
+    name: mysite-example-com-ca-issuer
+    kind: Issuer
+    group: cert-manager.io
+
+---
+
+# Create a Traefik TLSOption resource to require client certificates.
 apiVersion: traefik.containo.us/v1alpha1
 kind: TLSOption
 metadata:
@@ -8,11 +131,13 @@ spec:
   maxVersion: VersionTLS13
   clientAuth:
     secretNames:
-    - certificate-authority
+    - example-com-ca-certs-bundle
     clientAuthType: RequireAndVerifyClientCert
 
 ---
 
+# Create an Ingress that uses TLS certificates from a third-party with our new
+# certificates for client authentication.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -26,17 +151,17 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: YOUR_DOMAIN_HERE
+  - host: mysite.example.com
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: YOUR_SERVICE_HERE
+            name: mysite
             port:
                 number: 8080
   tls:
   - hosts:
-    - YOUR_DOMAIN_HERE
+    - mysite.example.com
     secretName: mysite-tls-prod
