@@ -81,7 +81,7 @@ openssl pkcs12 -export -clcerts \
 #### Automated Method Using cert-manager
 To avoid having to manually manage the certificates used for the CA, cert-manager can be leveraged to do this for us.
 
-Traefik expects a CA certificate chain bundle to be provided to it in a Secret, therefore, we can additionally use [trust-manager](https://cert-manager.io/docs/trust/trust-manager/) at version >=v0.7.0-alpha.2 (since this allows for this bundle to be written to a Secret rather than just to a ConfigMap) to create this Secret for us automatically. It can be installed with Helm as follows. Note that the name `example-com-ca-certs-bundle` is the name of a Secret that trust-manager will be allowed to read and write across all namespaces. More information about the configurable fields can be found on [Artifact Hub](https://artifacthub.io/packages/helm/cert-manager/trust-manager).
+Traefik expects a CA certificate chain bundle to be provided to it in a Secret, therefore, we can additionally use [trust-manager](https://cert-manager.io/docs/trust/trust-manager/) at version >=v0.7.0 (since this allows for this bundle to be written to a Secret rather than just to a ConfigMap) to create this Secret for us automatically. It can be installed with Helm as follows. Note that the name `example-com-ca-certs-bundle` is the name of a Secret that trust-manager will be allowed to read and write across all namespaces. More information about the configurable fields can be found on [Artifact Hub](https://artifacthub.io/packages/helm/cert-manager/trust-manager).
 
 ```bash
 helm repo add jetstack https://charts.jetstack.io --force-update
@@ -89,8 +89,8 @@ helm repo add jetstack https://charts.jetstack.io --force-update
 helm upgrade -i -n cert-manager trust-manager jetstack/trust-manager \
     --set defaultPackage.enabled=false \
     --set secretTargets.enabled=true \
-    --set secretTargets.authorizedSecrets={example-com-ca-certs-bundle} \
-    --version 0.7.0-alpha.2 \
+    --set secretTargets.authorizedSecrets={mysite-example-com-ca-certs-bundle} \
+    --version 0.7.0 \
     --wait
 ```
 
