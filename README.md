@@ -148,10 +148,11 @@ kubectl get nodes
 ## Further Reading
 The `docs/` directory contains documentation for further reading and extending the cluster's capabilities with the following:
 
- * [Ingress](/docs/ingress) - Receiving traffic into the cluster with Traefik
- * [Service Mesh](/docs/service_mesh) - Leveraging Linkerd to handle in-cluster networking
- * [Storage](/docs/storage) - Leveraging Longhorn for distributed block storage
- * [Upgrades](/docs/upgrades) - Keeping the cluster up-to-date
+ * [Ingress](/docs/ingress.md) - Receiving traffic into the cluster with Traefik
+ * [Monitoring and Observability](/docs/monitoring_and_observability.md) - Get insights into the health and state of the cluster
+ * [Service Mesh](/docs/service_mesh.md) - Leveraging Linkerd to handle in-cluster networking
+ * [Storage](/docs/storage.md) - Leveraging Longhorn for distributed block storage
+ * [Upgrades](/docs/upgrades.md) - Keeping the cluster up-to-date
 
 ## TODOs
  * Automate the deployment of Fedora CoreOS and K3s

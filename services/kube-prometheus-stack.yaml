@@ -1,0 +1,63 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: kube-prometheus-stack
+  namespace: kube-system
+spec:
+  repo: https://prometheus-community.github.io/helm-charts
+  chart: kube-prometheus-stack
+  createNamespace: true
+  targetNamespace: monitoring
+  version: "54.2.2"
+  valuesContent: |-
+    namespaceOverride: monitoring
+    alertmanager:
+      alertmanagerSpec:
+        nodeSelector:
+          node-role.kubernetes.io/control-plane: "true"
+        resources:
+          limits:
+            memory: 48Mi
+          requests:
+            memory: 48Mi
+        retention: 48h
+        storage:
+          volumeClaimTemplate:
+            spec:
+              resources:
+                requests:
+                  storage: 50Mi
+              storageClassName: longhorn
+    grafana:
+      adminPassword: prom-operator
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
+      resources:
+        limits:
+          memory: 768Mi
+        requests:
+          memory: 512Mi
+    nodeExporter:
+      operatingSystems:
+        darwin:
+          enabled: false
+    prometheus:
+      prometheusSpec:
+        nodeSelector:
+          node-role.kubernetes.io/control-plane: "true"
+        resources:
+          limits:
+            memory: 2Gi
+          requests:
+            memory: 1.5Gi
+        retention: 2d
+        retentionSize: 4500MB
+        scrapeInterval: 20s
+        scrapeTimeout: 5s
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              resources:
+                requests:
+                  storage: 5Gi
+              storageClassName: longhorn
