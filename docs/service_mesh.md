@@ -29,6 +29,7 @@ As per the [Linkerd documentation](https://linkerd.io/2.14/features/automatic-mt
    kubectl get secret -n linkerd linkerd-identity-issuer -o yaml
    ```
 1. [Install](https://linkerd.io/2.14/getting-started/#step-1-install-the-cli) the Linkerd CLI
+    1. Set up command completion if desired with `linkerd completion bash > /etc/bash_completion.d/linkerd`. Note that you may need to do `sudo -i` to run this
 1. Check everything is configured correctly with `linkerd check --pre`. This will likely fail in two places due to the linkerd namespace already existing; these failures can be ignored
 1. Install the Linkerd CRDs and then the control plane making sure to pass the --identity-external-issuer flag so that it uses the Cert Manager-managed Secrets. Again, a warning will be printed out due to the linkerd namespace already existing, but everything should work OK
    ```sh
@@ -43,6 +44,20 @@ As per the [Linkerd documentation](https://linkerd.io/2.14/features/automatic-mt
    linkerd check
    linkerd viz dashboard &
    ```
+
+### Upgrades
+Upgrading the CLI is as simple as [running the install command](https://linkerd.io/2.14/getting-started/#step-1-install-the-cli) again.
+
+To [upgrade the Linkerd control plane](https://linkerd.io/2.14/tasks/upgrade/#with-the-linkerd-cli), use the `linkerd upgrade` command:
+
+```bash
+linkerd upgrade --crds | kubectl apply -f -
+linkerd upgrade | kubectl apply -f -
+
+# Prune any resources that were present in the previous version but should not
+# be present in this one.
+linkerd prune | kubectl delete -f -
+```
 
 ## Terminating Meshed Jobs
 One [side-effect](https://github.com/kubernetes/kubernetes/issues/25908) of running a sidecar like Linkerd's proxy with a Job in Kubernetes is that the Job will continue to run even after the main container has finished due to the Linkerd proxy container never terminating. For a CronJob, this also means that as the first instance of the Job never finishes, all subsequent instances will get stuck in the PodInitializing state. There are [a number of workarounds](https://itnext.io/three-ways-to-use-linkerd-with-kubernetes-jobs-c12ccc6d4c7c) for this all with their own pros and cons as described below.
