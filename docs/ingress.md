@@ -89,9 +89,30 @@ helm repo add jetstack https://charts.jetstack.io --force-update
 helm upgrade -i -n cert-manager trust-manager jetstack/trust-manager \
     --set defaultPackage.enabled=false \
     --set secretTargets.enabled=true \
-    --set secretTargets.authorizedSecrets={mysite-example-com-ca-certs-bundle} \
+    --set "secretTargets.authorizedSecrets={mysite-example-com-ca-certs-bundle,mysite2-example-com-ca-certs-bundle}" \
     --version 0.7.0 \
     --wait
+```
+Alternatively, install trust-manager by kubectl applying the following HelmChart resource:
+```yaml
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: trust-manager
+  namespace: cert-manager
+spec:
+  repo: https://charts.jetstack.io
+  chart: jetstack/trust-manager
+  targetNamespace: cert-manager
+  version: "0.7.0"
+  valuesContent: |-
+    defaultPackage
+      enabled: false
+    secretTargets
+      enabled: true
+      authorizedSecrets
+      - mysite-example-com-ca-certs-bundle
+      - mysite2-example-com-ca-certs-bundle
 ```
 
 Now we need to create the cert-manager resources required for generating the CA and client certificates. These all need to be created in the same namespace, `cert-manager` is a good candidate, or a new one could be created for it. This is so that the CA certificates can be accessed and added into a Bundle resource for applications to use in their own namespaces.

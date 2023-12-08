@@ -151,6 +151,7 @@ The `docs/` directory contains documentation for further reading and extending t
  * [Ingress](/docs/ingress.md) - Receiving traffic into the cluster with Traefik
  * [Monitoring and Observability](/docs/monitoring_and_observability.md) - Get insights into the health and state of the cluster
  * [Service Mesh](/docs/service_mesh.md) - Leveraging Linkerd to handle in-cluster networking
+ * [Secret Management](/docs/secret_management.md) - Securely deploying and using Secrets in the cluster
  * [Storage](/docs/storage.md) - Leveraging Longhorn for distributed block storage
  * [Upgrades](/docs/upgrades.md) - Keeping the cluster up-to-date
 
