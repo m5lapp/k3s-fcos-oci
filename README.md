@@ -142,11 +142,25 @@ sed -i 's/127.0.0.1/EXTERNAL_IP_OR_DNS_ENTRY/' ~/.kube/config
 You can now use `kubectl` on your local machine to manage your cluster and check the nodes:
 
 ```sh
-kubectl get nodes
+kubectl get nodes -o wide
 ```
 
+### Renewing Client Certificates
+By default, the client credentials used for accessing the cluster via Kubectl will be rotated automatically after a year. When this happens, you will no-longer be able to use Kubectl to access the cluster and will receive an error message like this:
+
+```
+E0120 23:42:52.889590   28828 memcache.go:265] couldn't get current server API group list: the server has asked for the client to provide credentials
+E0120 23:42:52.897144   28828 memcache.go:265] couldn't get current server API group list: the server has asked for the client to provide credentials
+E0120 23:42:52.904849   28828 memcache.go:265] couldn't get current server API group list: the server has asked for the client to provide credentials
+E0120 23:42:52.910813   28828 memcache.go:265] couldn't get current server API group list: the server has asked for the client to provide credentials
+E0120 23:42:52.917023   28828 memcache.go:265] couldn't get current server API group list: the server has asked for the client to provide credentials
+error: You must be logged in to the server (the server has asked for the client to provide credentials)
+```
+
+The solution to this is simply to get the new credentials from `/etc/rancher/k3s/k3s.yaml` again on one of the API server nodes.
+
 ### Modifying a K3s Installation
-If you need to modify the options that a server was installed with, then as per [thie Reddit post](https://www.reddit.com/r/kubernetes/comments/pwmay3/modifying_running_k3s_cluster_configuration/), you can edit the command-line options in the systemd unit file at `/etc/systemd/system/k3s.service` and then run `sudo systemctl daemon-reload` before restarting K3s with `sudo systemctl restart k3s`.
+If you need to modify the options that a server was installed with, then as per [this Reddit post](https://www.reddit.com/r/kubernetes/comments/pwmay3/modifying_running_k3s_cluster_configuration/), you can edit the command-line options in the systemd unit file at `/etc/systemd/system/k3s.service` and then run `sudo systemctl daemon-reload` before restarting K3s with `sudo systemctl restart k3s`.
 
 ## Further Reading
 The `docs/` directory contains documentation for further reading and extending the cluster's capabilities with the following:
