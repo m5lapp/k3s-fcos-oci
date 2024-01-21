@@ -1,7 +1,27 @@
-# Service Mesh (Linkerd)
+# Cilium Service Mesh
+Unfortunately the Cilium service mesh is too resource intensive to run on the Oracle free-tier cluster.
 
 ## Installation
-The free-tier, four-node cluster does not really have sufficient resources available to run a service mesh like Istio. Particularly it seems to struggle with a lack of CPU resources. [Linkerd](https://linkerd.io/2.14/features/automatic-mtls/#operational-concerns) however is much more lightweight and works really well.
+As per the [Cilium documentation](https://docs.cilium.io/en/stable/gettingstarted/k8s-install-default/#install-cilium), to install Cilium on a K3s cluster, the cluster needs to  have been installed with the following flags set:
+
+ * `--disable-network-policy`
+ * `--flannel-backend=none` 
+
+Next, [install the Cilium CLI](https://docs.cilium.io/en/stable/gettingstarted/k8s-install-default/#install-the-cilium-cli) as described in the documentation and then use that to install Cilium into the cluster as follows:
+
+```bash
+export CILIUM_VERSION=$(curl --silent https://raw.githubusercontent.com/cilium/cilium/main/stable.txt)
+cilium install --version ${CILIUM_VERSION}
+
+# Test the installation was successful.
+cilium status --wait
+cilium connectivity test
+```
+
+# Linkerd Service Mesh
+
+## Installation
+The free-tier, four-node cluster does not really have sufficient resources available to run a service mesh like Cilium or Istio. Particularly it seems to struggle with a lack of CPU resources. [Linkerd](https://linkerd.io/2.14/features/automatic-mtls/#operational-concerns) however is much more lightweight and works really well.
 
 As per the [Linkerd documentation](https://linkerd.io/2.14/features/automatic-mtls/#operational-concerns), the default installation requires the trust anchor and cluster issuer certificate and key to be [manually rotated](https://linkerd.io/2.14/tasks/manually-rotating-control-plane-tls-credentials/) every year. It therefore might be preferable to install Linkerd with a longer-lasting, manually-created trust anchor certificate and [use Cert Manager](https://linkerd.io/2.14/tasks/automatically-rotating-control-plane-tls-credentials/) to rotate the cluster issuer certificate and key. The installation process therefore is as follows:
 
