@@ -145,6 +145,9 @@ You can now use `kubectl` on your local machine to manage your cluster and check
 kubectl get nodes
 ```
 
+### Modifying a K3s Installation
+If you need to modify the options that a server was installed with, then as per [thie Reddit post](https://www.reddit.com/r/kubernetes/comments/pwmay3/modifying_running_k3s_cluster_configuration/), you can edit the command-line options in the systemd unit file at `/etc/systemd/system/k3s.service` and then run `sudo systemctl daemon-reload` before restarting K3s with `sudo systemctl restart k3s`.
+
 ## Further Reading
 The `docs/` directory contains documentation for further reading and extending the cluster's capabilities with the following:
 
