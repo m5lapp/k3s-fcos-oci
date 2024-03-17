@@ -165,6 +165,7 @@ If you need to modify the options that a server was installed with, then as per 
 ## Further Reading
 The `docs/` directory contains documentation for further reading and extending the cluster's capabilities with the following:
 
+ * [CI/CD](/docs/cicd.md) - Automating the deployment of resources into the cluster
  * [Ingress](/docs/ingress.md) - Receiving traffic into the cluster with Traefik
  * [Monitoring and Observability](/docs/monitoring_and_observability.md) - Get insights into the health and state of the cluster
  * [Service Mesh](/docs/service_mesh.md) - Leveraging Linkerd to handle in-cluster networking
