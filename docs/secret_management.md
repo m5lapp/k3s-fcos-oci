@@ -68,10 +68,15 @@ Note that if a value is encrypted twice with the same certificate, the resultant
 # corresponding SealedSecret from it in the my-sealed-secret-file.yaml file.
 kubeseal --secret-file my-secret.yaml --sealed-secret-file my-sealed-secret.yaml
 
-# Generate an encrypted, sealed secret value that can only be used with a Secret
-# named private-key and in the my-namespace namespace from the file
-# private-key.pem and print it to standard out.
+# Generate an encrypted sealed secret value from the file private-key.pem that
+# can only be used in a SealedSecret named `private-key` that lives in the
+# `my-namespace` namespace, and print it to standard out.
 kubeseal --scope strict --raw --name private-key --namespace my-namespace --from-file private-key.pem && echo
+
+# Read a secret value from standard input, seal it and print it to standard
+# output. The `namespace-wide` scope means that it can only be unsealed into the
+# my-namespace namespace, though the SealedSecret reource can have any name.
+echo 'Pa55W0rd' | kubeseal --scope namespace-wide --raw --namespace my-namespace --from-file /dev/stdin
 
 # Read a secret value that you write or paste to standard input and seal it.
 # The input value can be multi-line and once it has been written you should
