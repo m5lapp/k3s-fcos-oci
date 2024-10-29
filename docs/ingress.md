@@ -258,12 +258,12 @@ openssl pkcs12 -export -out mysite-userx.p12 -name "mysite.example.com" \
     -in <(kubectl get secrets mysite-example-com-userx-client-cert \
               -n cert-manager \
               -o go-template='{{index .data "tls.crt"}}' | base64 -d) \
-    -inkey <(kubectl get secrets mysite-example-com-${USER}-client-cert \
+    -inkey <(kubectl get secrets mysite-example-com-userx-client-cert \
                 -n cert-manager \
                 -o go-template='{{index .data "tls.key"}}' | base64 -d)
 ```
 
-Once the client certificate and key have been exported, the corresponding Certificate and Secret resources can be removed from the cluster if desired:
+Once the client certificate and key have been exported, the corresponding Certificate and Secret resources can be removed from the cluster if desired, alternatively, they can be left in-place and cert-manager will renew the certificate when it's due and the previous command can be used to extract the updated certificate and key from the cluster again.
 
 ```bash
 kubectl delete secret -n cert-manager mysite-example-com-userx-client-cert
@@ -281,7 +281,7 @@ On *Android*, open **Settings**, then navigate to **Security and privacy** > **M
 Unfortunately, on Android, Firefox does not support client certificates — even with support for third-party CA certificates turned on via the secret menu. Brave, Chrome, Edge and Opera all do however, and will prompt for which installed certificate to use when the site is visited.
 
 ### Configure the Ingress
-Finally, as per the `services/ingress_mtls_example.yaml` file, create a Traefik `TLSOption` resource with the `secretNames` field set to the name of the CA certificate bundle Secret created previously. You must also add the required two "router" annotations to the Ingress resource. The format of the second annotation's value is `${NAMESPACE}-${TLSOPTION_RESOURCE_NAME}-kubernetescrd`.
+Finally, as per the `services/ingress_mtls_example.yaml` file, create a Traefik `TLSOption` resource with the `secretNames` field set to the name of the CA certificate bundle Secret created previously. You must also add the required two "router" annotations to the Ingress resource. The format of the second annotation's value is `${NAMESPACE}-${TLSOPTION_RESOURCE_NAME}@kubernetescrd`.
 
 ```yaml
 apiVersion: traefik.containo.us/v1alpha1
