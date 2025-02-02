@@ -38,7 +38,7 @@ variable "init_server_image" {
   type        = string
   # https://docs.oracle.com/en-us/iaas/images/oracle-linux-9x/
   # Oracle-Linux-9.4-aarch64-2024.11.30-0
-  default     = " ocid1.image.oc1.uk-london-1.aaaaaaaaddsnxqcnjih3csusa2ixtq3wbhl3qdonmhbdtm7lffiindovy2kq"
+  default = " ocid1.image.oc1.uk-london-1.aaaaaaaaddsnxqcnjih3csusa2ixtq3wbhl3qdonmhbdtm7lffiindovy2kq"
 }
 
 variable "init_agent_image" {
@@ -46,7 +46,7 @@ variable "init_agent_image" {
   type        = string
   # https://docs.oracle.com/en-us/iaas/images/oracle-linux-9x/
   # Oracle-Linux-9.4-2024.11.30-0
-  default     = " ocid1.image.oc1.uk-london-1.aaaaaaaaeep23xg56nj4mb25ujv55gjq63uh6kjmyn54oljnn3yzdztlrgma"
+  default = " ocid1.image.oc1.uk-london-1.aaaaaaaaeep23xg56nj4mb25ujv55gjq63uh6kjmyn54oljnn3yzdztlrgma"
 }
 
 variable "server_0_user_data" {
@@ -78,9 +78,9 @@ EOT
 
 locals {
   server_instance_config = {
-    shape_id = "VM.Standard.A1.Flex"
-    ocpus    = 2
-    ram      = 12
+    shape_id    = "VM.Standard.A1.Flex"
+    ocpus       = 2
+    ram         = 12
     source_id   = "${var.init_server_image}"
     source_type = "image"
     server_ip_0 = "10.0.0.10"
@@ -90,9 +90,9 @@ locals {
     }
   }
   agent_instance_config = {
-    shape_id = "VM.Standard.E2.1.Micro"
-    ocpus    = 1
-    ram      = 1
+    shape_id    = "VM.Standard.E2.1.Micro"
+    ocpus       = 1
+    ram         = 1
     source_id   = "${var.init_agent_image}"
     source_type = "image"
     agent_ips = [
