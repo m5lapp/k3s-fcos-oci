@@ -2,7 +2,7 @@ resource "oci_core_vcn" "cluster_network" {
   compartment_id = var.compartment_id
 
   cidr_blocks = [
-    "10.0.0.0/24"
+    var.rfc1918_cidr_block
   ]
   display_name = "cluster-vcn"
   dns_label    = "internal"
@@ -18,10 +18,11 @@ resource "oci_core_default_security_list" "default_list" {
     description = "Allow outbound"
     destination = "0.0.0.0/0"
   }
+
   ingress_security_rules {
     protocol    = "all"
     description = "Allow inter-subnet traffic"
-    source      = "10.0.0.0/24"
+    source      = var.rfc1918_cidr_block
   }
 }
 

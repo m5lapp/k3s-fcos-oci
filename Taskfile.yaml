@@ -7,12 +7,12 @@ tasks:
   plan:
     dir: terraform/
     cmds:
-    # - terraform plan --out ".tfplan"
-    - terraform plan --target module.network.oci_core_subnet.cluster_subnet --out ".tfplan"
+    - terraform init
+    - terraform plan --out .tfplan
 
   apply:
     dir: terraform/
     cmds:
     - terraform fmt --recursive
-    - terraform apply --target module.network.oci_core_subnet.cluster_subnet ".tfplan"
+    - terraform apply .tfplan
 

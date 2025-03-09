@@ -1,0 +1,122 @@
+# https://coreos.github.io/butane/config-fcos-v1_6/
+variant: fcos
+version: 1.6.0
+passwd:
+  users:
+  - name: core
+    ssh_authorized_keys:
+    %{~ for ssh_authorized_key in split(",", ssh_authorized_keys) ~}
+    - ${ssh_authorized_key}
+    %{~ endfor ~}
+
+storage:
+  files:
+  - path: /etc/hostname
+    mode: 0644
+    contents:
+      inline: k3s-${node_type}-${node_index}
+
+  - path: /etc/NetworkManager/system-connections/enp0s3.nmconnection
+    mode: 0600
+    contents:
+      inline: | 
+        [connection]
+        id=enp0s3
+        uuid=258b460c-5f19-4c59-9efa-09b940fe799c
+        type=ethernet
+        autoconnect-retries=1
+        interface-name=enp0s3
+
+        [ethernet]
+
+        [ipv4]
+        dhcp-timeout=90
+        dhcp-vendor-class-identifier=anaconda-Linux
+        may-fail=false
+        method=auto
+
+        [ipv6]
+        addr-gen-mode=eui64
+        dhcp-timeout=90
+        method=auto
+
+        [proxy]
+
+        [user]
+        org.freedesktop.NetworkManager.origin=nm-initrd-generator
+
+  %{~ if node_type == "agent" ~}
+  - path: /etc/NetworkManager/system-connections/ens3f1.nmconnection
+    mode: 0600
+    contents:
+      inline: | 
+        [connection]
+        id=ens3f1
+        uuid=dc7612e9-f662-489a-8a13-fd6a2fa566d4
+        type=ethernet
+        autoconnect=false
+        interface-name=ens3f1
+
+        [ethernet]
+
+        [ipv4]
+        method=auto
+
+        [ipv6]
+        addr-gen-mode=eui64
+        method=auto
+
+        [proxy]
+  %{~ endif ~}
+
+  - path: /etc/zincati/config.d/51-rollout-wariness.toml
+    contents:
+      inline: |
+        [identity]
+        rollout_wariness = ${rollout_wariness}
+
+  - path: /etc/zincati/config.d/55-updates-strategy.toml
+    contents:
+      inline: |
+        [updates]
+        strategy = "periodic"
+        [[updates.periodic.window]]
+        days = [ "Mon" ]
+        start_time = "${rollout_time}"
+        length_minutes = 60
+
+  - path: /home/core/install_ks3.sh
+    mode: 0750
+    user:
+      name: core
+    group:
+      name: core
+    contents:
+      inline: |
+        #!/usr/bin/env bash
+
+        EXTERNAL_IP=$(curl https://ifconfig.me/ip)
+
+        curl -sfL https://get.k3s.io | \
+            sh -s - \
+                ${node_type} \
+              %{~ if node_type == "server" && node_index == "0" ~}
+                --cluster-init \
+                --node-ip ${primary_server_ip} \
+                --tls-san k3s-control-plane.${domain_name} \
+              %{~ else ~}
+                --server https://${primary_server_ip}:6443 \
+              %{~ endif ~}
+              %{~ if node_type == "server" ~}
+                --tls-san $${EXTERNAL_IP} \
+                --tls-san k3s-${node_type}-${node_index} \
+                --tls-san k3s-${node_type}-${node_index}.${domain_name} \
+              %{~ endif ~}
+              %{~ if node_type == "agent" ~}
+              %{~ if taint_low_resource_nodes ~}
+                --node-label "node-restriction.${domain_name}/low-resource=true" \
+                --node-taint "node-restriction.${domain_name}/low-resource=true:PreferNoSchedule" \
+              %{~ endif ~}
+              %{~ endif ~}
+                --token "${cluster_token}"
+
