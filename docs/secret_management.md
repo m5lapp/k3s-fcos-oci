@@ -76,7 +76,7 @@ kubeseal --scope strict --raw --name private-key --namespace my-namespace --from
 # Read a secret value from standard input, seal it and print it to standard
 # output. The `namespace-wide` scope means that it can only be unsealed into the
 # my-namespace namespace, though the SealedSecret reource can have any name.
-echo 'Pa55W0rd' | kubeseal --scope namespace-wide --raw --namespace my-namespace --from-file /dev/stdin
+echo -n 'Pa55W0rd' | kubeseal --scope namespace-wide --raw --namespace my-namespace --from-file /dev/stdin
 
 # Read a secret value that you write or paste to standard input and seal it.
 # The input value can be multi-line and once it has been written you should
