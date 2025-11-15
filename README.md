@@ -152,6 +152,15 @@ curl -sfL https://get.k3s.io | \
     --node-taint "node-restriction.example.com/low-resource=true:PreferNoSchedule"
 ```
 
+You may find that when starting up the agent Nodes after installing K3s on them that you get log messages like the following (run `systemctl status k3s-agent` or `journalctl -xeu k3s-agent` to see these logs) when the K3s service is trying to start up. In this case, the solution is to get the [secure ("full") token](https://docs.k3s.io/cli/token#secure) from `/var/lib/rancher/k3s/server/token` on `k3s-server-0` and use that in the `install_k3s.sh` script on the agent Node instead of the short-form token that was used to set up the control plane Nodes.
+
+```log
+WARN[0000] Cluster CA certificate is not trusted by the host CA bundle, but the token does not include a CA hash. Use the full token from the server's node-token file to enable Cluster CA validation. 
+INFO[0000] Waiting to retrieve agent configuration; server is not ready: failed to retrieve configuration from server: not authorized 
+```
+
+---
+
 Finally, if you want to be able to use Kubectl from externally, copy the config off of k3s-server-0 to `~/.kube/config`, then update the `server:` line to change the IP address from 127.0.0.1 to either the control plane DNS entry that you set up previously, or the public IP of either k3s-server-0 or k3s-server-1.
 
 ```sh
