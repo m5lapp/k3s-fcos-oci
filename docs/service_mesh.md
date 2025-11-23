@@ -89,7 +89,7 @@ This feature can also be configured on a Pod-by-Pod basis by using the following
 
 ```yaml
 annotations:
-  annotation config.beta.linkerd.io/proxy-enable-native-sidecar: "true"
+  config.beta.linkerd.io/proxy-enable-native-sidecar: "true"
 ```
 
 ### Option 1
