@@ -82,6 +82,16 @@ linkerd prune | kubectl delete -f -
 ## Terminating Meshed Jobs
 One [side-effect](https://github.com/kubernetes/kubernetes/issues/25908) of running a sidecar like Linkerd's proxy with a Job in Kubernetes is that the Job will continue to run even after the main container has finished due to the Linkerd proxy container never terminating. For a CronJob, this also means that as the first instance of the Job never finishes, all subsequent instances will get stuck in the PodInitializing state. There are [a number of workarounds](https://itnext.io/three-ways-to-use-linkerd-with-kubernetes-jobs-c12ccc6d4c7c) for this all with their own pros and cons as described below.
 
+### Option 0 (2025 update)
+If you are running Kubernetes version 1.28+ and Linkerd version 2.15+, then Linkerd can be installed with the `.proxy.nativeSidecar` Helm value set. This means that the sidecar proxies will all be deployed as an init container with a `restartPolicy` of `Always` which makes them a [**native sidecar**](https://kubernetes.io/blog/2023/08/25/native-sidecar-containers/). This affects the container in a few ways; firstly, the next init container in the chain will start up as soon as the proxy sidecar container has started up rather than waiting for it to run to completion like a normal init container does, this also means that the sidecar container is guaranteed to be fully up and running before the main container starts up. Most importantly though, as the name suggests, the sidecar container will restart automatically if it fails for any reason meaning that it will run for the life of the Pod until its main container is terminated; therefore, the sidecar will always be available (unless it is currently restarting).
+
+This feature can also be configured on a Pod-by-Pod basis by using the following Pod annotation:
+
+```yaml
+annotations:
+  annotation config.beta.linkerd.io/proxy-enable-native-sidecar: "true"
+```
+
 ### Option 1
 The simplest workaround for this issue is to simply remove any CronJob or Job Pods from the mesh by adding the `linkerd.io/inject: disabled` annotation to the `.spec.template.metadata.annotations` field of a Job or a CronJob's `jobTemplate`. The main downside of this approach is that if the Pod needs to communicate with another Pod on the mesh using mTLS, then this will obviously not work.
 
@@ -130,3 +140,4 @@ spec:
 ```
 
 This should have the advantage of having no coupling between the Jobs and the service mesh other than the addition of the annotation. Unfortunately, I have not been able to get this working in this K3s cluster, the main container runs to completion, but the sidecar-controller Pod does not seem to even send the SIGTERM that it's supposed to and the Pod gets stuck in a NotReady status.
+
