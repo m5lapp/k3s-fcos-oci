@@ -1,5 +1,7 @@
 # Free K3s Cluster on Fedora CoreOS on Oracle Cloud Infrastructure (OCI)
 
+**IMPORTANT: This project is no longer maintained. Instead, I have created a new project called [oracle-cloud-free-tier-talos-linux-kubernetes-cluster](https://github.com/m5lapp/oracle-cloud-free-tier-talos-linux-kubernetes-cluster) which aims to achieve the same thing (a Kubernetes cluster running entirely in OCI's free tier), but using Talos Linux as the host OS instead.**
+
 This project is based on the [k3s-cluster-on-oracle-cloud-infrastructure](https://github.com/r0b2g1t/k3s-cluster-on-oracle-cloud-infrastructure) project which aims to automatically deploy a K3s cluster with four nodes which is composed only of always free infrastructure resources on Oracle Cloud Infrastructure (OCI).
 
 Unfortunately the K3OS project that that project uses as the Operating System was deprecated in 2022. Therefore, this project aims to use Fedora CoreOS as the underlying host OS. Similar to K3OS, Fedora CoreOS is a lightweight, automatically updating and immutable OS and is therefore a great alternative to K3OS.
